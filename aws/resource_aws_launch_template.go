@@ -404,10 +404,8 @@ func resourceAwsLaunchTemplate() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"associate_public_ip_address": {
-							Type:             schema.TypeString,
-							Optional:         true,
-							DiffSuppressFunc: suppressEquivalentTypeStringBoolean,
-							ValidateFunc:     validateTypeStringNullableBoolean,
+							Type:     schema.TypeBool,
+							Optional: true,
 						},
 						"delete_on_termination": {
 							Type:     schema.TypeBool,
@@ -1056,7 +1054,7 @@ func getNetworkInterfaces(n []*ec2.LaunchTemplateInstanceNetworkInterfaceSpecifi
 			"subnet_id":             aws.StringValue(v.SubnetId),
 		}
 		if v.AssociatePublicIpAddress != nil {
-			networkInterface["associate_public_ip_address"] = strconv.FormatBool(aws.BoolValue(v.AssociatePublicIpAddress))
+			networkInterface["associate_public_ip_address"] = aws.BoolValue(v.AssociatePublicIpAddress)
 		}
 
 		if len(v.Ipv6Addresses) > 0 {
@@ -1449,12 +1447,8 @@ func readNetworkInterfacesFromConfig(ni map[string]interface{}) (*ec2.LaunchTemp
 		networkInterface.NetworkInterfaceId = aws.String(v)
 	}
 
-	if v, ok := ni["associate_public_ip_address"]; ok && v.(string) != "" {
-		vBool, err := strconv.ParseBool(v.(string))
-		if err != nil {
-			return nil, fmt.Errorf("error converting associate_public_ip_address %q from string to boolean: %s", v.(string), err)
-		}
-		networkInterface.AssociatePublicIpAddress = aws.Bool(vBool)
+	if v, ok := ni["associate_public_ip_address"]; ok {
+		networkInterface.AssociatePublicIpAddress = aws.Bool(v.(bool))
 	}
 
 	if v, ok := ni["private_ip_address"].(string); ok && v != "" {
